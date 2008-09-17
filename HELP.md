@@ -1,6 +1,6 @@
 The Tags extension provides a way for you to easily categorize your pages.
 
-== Results page
+## Results page
 
 	<r:search:empty>
 	  <h2>I couldn't find anything tagged with "<r:search:query/>".</h2>
@@ -17,22 +17,22 @@ The Tags extension provides a way for you to easily categorize your pages.
 	</r:search:results>
 
 
-== Tag cloud
+## Tag cloud
 
 Use `<r:tag_cloud />` anywhere you like.
 I made a stab at building the 'perfect' tag cloud markup, as inspired by a post on 24ways.org;  http://24ways.org/2006/marking-up-a-tag-cloud
 
-== Tag list
+## Tag list
 
 Use `<r:tag_list />` to get a list of tags for the current page. 
 Also works through children:each.
 
-== All tags
+## All tags
 
 Use `<r:all_tags />` to get a list of all tags. You may iterate through them with
 `<r:all_tags:each>` and access their associated pages with `<r:all_tags:each:pages:each>`
 
-== Collections
+## Collections
 
 You can grab a collection of pages with a certain tag like so;
 
