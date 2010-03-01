@@ -1,5 +1,10 @@
 TaggingMethods = Proc.new do
   
+  def valid_with_tags?
+    return (self.errors.empty? && valid_without_tags?)
+  end
+  alias_method_chain :valid?, :tags
+  
   def tag_with tags
     self.save if self.new_record?
     # just skip the whole method if the tags string hasn't changed
@@ -10,7 +15,10 @@ TaggingMethods = Proc.new do
     
     tags.split(MetaTag::DELIMITER).each do |tag|
       begin
-        MetaTag.find_or_create_by_name(tag.strip.squeeze(" ")).taggables << self
+        tag = MetaTag.find_or_initialize_by_name(tag.strip.squeeze(" "))
+        meta_tags << tag unless meta_tags.include?(tag)
+      rescue ActiveRecord::RecordInvalid => e
+        errors.add_to_base("Tags can not contain special characters")
       rescue ActiveRecord::StatementInvalid => e
         # With SQLite3 - a duplicate tagging will result in the following message:
         # SQLite3::SQLException: SQL logic error or missing database: INSERT INTO taggings ("meta_tag_id", "taggable_type", "taggable_id") VALUES(11, 'Page', 74)
@@ -33,7 +41,7 @@ TaggingMethods = Proc.new do
    #         Model.tagged_with("hello", "world", :limit => 10)
    #
    def self.tagged_with(*tag_list)
-     options = tag_list.last.is_a?(Hash) ? tag_list.pop : {}
+     options = tag_list.extract_options!
      tag_list = parse_tags(tag_list)
    
      scope = scope(:find)
@@ -43,7 +51,7 @@ TaggingMethods = Proc.new do
      sql  = "SELECT #{(scope && scope[:select]) || options[:select]} "
      sql << "FROM #{(scope && scope[:from]) || options[:from]} "
 
-     add_joins!(sql, options, scope)
+     add_joins!(sql, options[:joins], scope)
    
      sql << "WHERE #{table_name}.#{primary_key} = taggings.taggable_id "
      sql << "AND taggings.taggable_type = '#{ActiveRecord::Base.send(:class_name_of_active_record_descendant, self).to_s}' "
@@ -69,7 +77,7 @@ TaggingMethods = Proc.new do
    end
    
    def self.tagged_with_any(*tag_list)
-     options = tag_list.last.is_a?(Hash) ? tag_list.pop : {}
+     options = tag_list.extract_options!
      tag_list = parse_tags(tag_list)
    
      scope = scope(:find)
@@ -79,7 +87,7 @@ TaggingMethods = Proc.new do
      sql  = "SELECT #{(scope && scope[:select]) || options[:select]} "
      sql << "FROM #{(scope && scope[:from]) || options[:from]} "
 
-     add_joins!(sql, options, scope)
+     add_joins!(sql, options[:joins], scope)
    
      sql << "WHERE #{table_name}.#{primary_key} = taggings.taggable_id "
      sql << "AND taggings.taggable_type = '#{ActiveRecord::Base.send(:class_name_of_active_record_descendant, self).to_s}' "
